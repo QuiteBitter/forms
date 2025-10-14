@@ -31,7 +31,7 @@
 				@input="onInput"
 				@keydown.enter.exact.prevent="onKeydownEnter" />
 			<NcActions
-				v-if="!readOnly"
+				v-if="showValidationTypeMenu"
 				:id="validationTypeMenuId"
 				:aria-label="
 					t('forms', 'Input types (currently: {type})', {
@@ -130,7 +130,11 @@ export default {
 		 * Name of the current validation type, fallsback to 'text'
 		 */
 		validationType() {
-			return this.extraSettings?.validationType || 'text'
+			return (
+				this.extraSettings?.validationType
+				|| this.fixedValidationType
+				|| 'text'
+			)
 		},
 
 		/**
@@ -146,9 +150,39 @@ export default {
 		validationRegex() {
 			return this.extraSettings?.validationRegex || ''
 		},
+		fixedValidationType() {
+			return this.answerType?.fixedValidationType
+		},
+		showValidationTypeMenu() {
+			return !this.readOnly && !this.fixedValidationType
+		},
+	},
+
+	watch: {
+		extraSettings: {
+			handler() {
+				this.ensureFixedValidationType()
+			},
+			deep: true,
+		},
+	},
+
+	mounted() {
+		this.ensureFixedValidationType()
 	},
 
 	methods: {
+		ensureFixedValidationType() {
+			if (!this.fixedValidationType || this.readOnly) {
+				return
+			}
+
+			if (this.extraSettings?.validationType === this.fixedValidationType) {
+				return
+			}
+
+			this.onExtraSettingsChange({ validationType: this.fixedValidationType })
+		},
 		onInput() {
 			/** @type {HTMLObjectElement} */
 			const input = this.$refs.input
@@ -182,6 +216,9 @@ export default {
 		 * @param {string} validationType new input type
 		 */
 		onChangeValidationType(validationType) {
+			if (this.fixedValidationType) {
+				return
+			}
 			if (validationType === 'regex') {
 				// Make sure to also submit a regex (even if empty)
 				this.onExtraSettingsChange({

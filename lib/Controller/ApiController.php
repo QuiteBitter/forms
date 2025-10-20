@@ -631,6 +631,15 @@ class ApiController extends OCSController {
 			throw new OCSBadRequestException('This form is archived and can not be modified');
 		}
 
+		// Map frontend-only 'email' type to backend 'short' if client attempts to set it
+		if (isset($keyValuePairs['type']) && $keyValuePairs['type'] === 'email') {
+			$keyValuePairs['type'] = Constants::ANSWER_TYPE_SHORT;
+			if (!isset($keyValuePairs['extraSettings']) || !is_array($keyValuePairs['extraSettings'])) {
+				$keyValuePairs['extraSettings'] = [];
+			}
+			$keyValuePairs['extraSettings']['validationType'] = 'email';
+		}
+
 		//Don't allow to change id or formId
 		if (key_exists('id', $keyValuePairs) || key_exists('formId', $keyValuePairs)) {
 			$this->logger->debug('Not allowed to update \'id\' or \'formId\'');

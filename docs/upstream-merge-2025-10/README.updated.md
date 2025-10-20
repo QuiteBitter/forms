@@ -22,8 +22,9 @@ Email confirmations are sent automatically if a submission includes an email add
 
 Behavior:
 - The first non-empty matching answer becomes the recipient.
-- The recipient is validated via Nextcloud mailer before sending; invalid addresses are skipped.
+- The recipient is validated via `IEmailValidator::isValid()` when available (fallback to mailer validation); invalid addresses are skipped.
 - Email content uses Nextcloud’s email template and includes a brief summary of textual answers.
+ - Outgoing messages include the `Auto-Submitted: auto-generated` header to minimize auto-replies.
 
 ## Important Files
 

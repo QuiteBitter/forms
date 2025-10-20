@@ -33,6 +33,8 @@ use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\IUserSession;
+use OCP\Mail\IEmailValidator;
+use OCP\Server;
 use OCP\Mail\IMailer;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -551,7 +553,7 @@ class SubmissionService {
 		if ($validationType === null) {
 			$title = $question['text'] ?? '';
 			if (is_string($title) && $this->titleIndicatesEmail($title)) {
-				return $this->mailer->validateMailAddress($data);
+				return $this->isValidEmail($data);
 			}
 			// No type defined, so fallback to 'text' => no special handling
 			return true;
@@ -559,7 +561,7 @@ class SubmissionService {
 
 		switch ($validationType) {
 			case 'email':
-				return $this->mailer->validateMailAddress($data);
+				return $this->isValidEmail($data);
 			case 'number':
 				return is_numeric($data);
 			case 'phone':
@@ -581,6 +583,20 @@ class SubmissionService {
 				// The result is just a non-validated text on the results, but not a fully declined submission. So no need to throw but simply return false here.
 				return false;
 		}
+	}
+
+	private function isValidEmail(string $email): bool {
+		try {
+			if (class_exists(IEmailValidator::class)) {
+				/** @var IEmailValidator $validator */
+				$validator = Server::get(IEmailValidator::class);
+				return $validator->isValid($email);
+			}
+		} catch (\Throwable $e) {
+			// Fallback below
+		}
+
+		return $this->mailer->validateMailAddress($email);
 	}
 
 	private function titleIndicatesEmail(string $title): bool {

@@ -13,6 +13,9 @@ use OCA\Forms\Db\Form;
 use OCA\Forms\Db\Submission;
 use OCP\IL10N;
 use OCP\Mail\IMailer;
+use OCP\Mail\Headers\AutoSubmitted;
+use OCP\Mail\IEmailValidator;
+use OCP\Server;
 use Psr\Log\LoggerInterface;
 
 class ConfirmationMailService {
@@ -26,15 +29,15 @@ class ConfirmationMailService {
 	/**
 	 * @param array<int, array{question: string, answer: string}> $answerSummaries
 	 */
-	public function send(Form $form, Submission $submission, string $recipient, array $answerSummaries = []): void {
-		if (!$this->mailer->validateMailAddress($recipient)) {
-			$this->logger->debug('Skipping confirmation mail, invalid recipient address', [
-				'formId' => $form->getId(),
-				'submissionId' => $submission->getId(),
-				'email' => $recipient,
-			]);
-			return;
-		}
+		public function send(Form $form, Submission $submission, string $recipient, array $answerSummaries = []): void {
+			if (!$this->isValidEmail($recipient)) {
+				$this->logger->debug('Skipping confirmation mail, invalid recipient address', [
+					'formId' => $form->getId(),
+					'submissionId' => $submission->getId(),
+					'email' => $recipient,
+				]);
+				return;
+			}
 
 		$formTitle = $form->getTitle();
 		$subject = $this->l10n->t('Confirmation for your response to %s', [$formTitle]);
@@ -78,10 +81,11 @@ class ConfirmationMailService {
 				$this->l10n->t('This message was sent automatically by %s.', [$this->l10n->t('Forms')])
 			);
 
-			$message = $this->mailer->createMessage();
-			$message->setSubject($subject);
-			$message->setTo([$recipient]);
-			$message->useTemplate($emailTemplate);
+				$message = $this->mailer->createMessage();
+				$message->setAutoSubmitted(AutoSubmitted::VALUE_AUTO_GENERATED);
+				$message->setSubject($subject);
+				$message->setTo([$recipient]);
+				$message->useTemplate($emailTemplate);
 
 			$this->mailer->send($message);
 		} catch (\Throwable $e) {
@@ -90,6 +94,22 @@ class ConfirmationMailService {
 				'submissionId' => $submission->getId(),
 				'exception' => $e,
 			]);
+			}
 		}
+
+	private function isValidEmail(string $email): bool {
+		try {
+			// Prefer modern validator if available
+			if (class_exists(IEmailValidator::class)) {
+				/** @var IEmailValidator $validator */
+				$validator = Server::get(IEmailValidator::class);
+				return $validator->isValid($email);
+			}
+		} catch (\Throwable $e) {
+			// Fallback below
+		}
+
+		// Fallback for older cores
+		return $this->mailer->validateMailAddress($email);
 	}
 }

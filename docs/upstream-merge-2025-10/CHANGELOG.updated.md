@@ -34,3 +34,5 @@
 - Build with Node 22 (`nvm use 22`, `npm ci`, `npm run build`).
 - No DB migrations are required; feature operates entirely on submitted answers.
 - Submissions validation now also enforces email format when a short-answer question's title indicates an email address.
+- Email validation is future-proofed: prefers `OCP\Mail\IEmailValidator::isValid()`, with fallback to `IMailer::validateMailAddress()` for older cores.
+- Outgoing confirmation messages include `Auto-Submitted: auto-generated` to reduce auto-replies.

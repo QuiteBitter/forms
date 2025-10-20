@@ -546,12 +546,18 @@ class SubmissionService {
 	 * Validate short question answers if special validation types are set
 	 */
 	private function validateShortQuestion(array $question, string $data): bool {
-		if (!isset($question['extraSettings']) || !isset($question['extraSettings']['validationType'])) {
+		$validationType = $question['extraSettings']['validationType'] ?? null;
+		// If no explicit validation is set but the title indicates an e-mail field, enforce e-mail validation
+		if ($validationType === null) {
+			$title = $question['text'] ?? '';
+			if (is_string($title) && $this->titleIndicatesEmail($title)) {
+				return $this->mailer->validateMailAddress($data);
+			}
 			// No type defined, so fallback to 'text' => no special handling
 			return true;
 		}
 
-		switch ($question['extraSettings']['validationType']) {
+		switch ($validationType) {
 			case 'email':
 				return $this->mailer->validateMailAddress($data);
 			case 'number':
@@ -575,5 +581,25 @@ class SubmissionService {
 				// The result is just a non-validated text on the results, but not a fully declined submission. So no need to throw but simply return false here.
 				return false;
 		}
+	}
+
+	private function titleIndicatesEmail(string $title): bool {
+		$normalized = mb_strtolower($title);
+		$collapsed = str_replace(["\t", "\n", "\r", " ", "-", "_", ":", ";", ","], '', $normalized);
+		$needles = [
+			'email',
+			'emailaddress',
+			'emailadresse',
+			'correoelectronico',
+			'adresseemail',
+			'emailid',
+		];
+		foreach ($needles as $needle) {
+			$n = str_replace(["\t", "\n", "\r", " ", "-", "_", ":", ";", ","], '', mb_strtolower($needle));
+			if ($n !== '' && str_contains($collapsed, $n)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

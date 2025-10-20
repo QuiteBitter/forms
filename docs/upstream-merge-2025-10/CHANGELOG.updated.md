@@ -15,7 +15,10 @@
 - `lib/Events/FormSubmittedEvent.php`:
   - Kept `getSubmission()` accessor introduced by our feature for listener usage.
 - `lib/Listener/ConfirmationEmailListener.php`:
-  - Detect email fields by either `type === 'email'` (frontend) or `type === short` with `extraSettings.validationType === 'email'`.
+  - Detect email fields by any of:
+    - `type === 'email'` (frontend),
+    - `type === 'short'` with `extraSettings.validationType === 'email'`, or
+    - `type === 'short'` whose title contains email-like keywords (e.g. “email”, “e‑mail”, localized variants).
 - Tests updated to reflect removal of custom backend answer type constant.
 
 ## Removed
@@ -30,4 +33,4 @@
 ## Operational Notes
 - Build with Node 22 (`nvm use 22`, `npm ci`, `npm run build`).
 - No DB migrations are required; feature operates entirely on submitted answers.
-
+- Submissions validation now also enforces email format when a short-answer question's title indicates an email address.

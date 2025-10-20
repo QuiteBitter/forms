@@ -59,7 +59,7 @@ class ConfirmationEmailListener implements IEventListener {
 			$questionType = $question->getType();
 			$answerText = trim($answer->getText() ?? '');
 
-			if ($emailAddress === null && $answerText !== '' && $this->answerBelongsToEmailField($questionType, $question->getExtraSettings())) {
+			if ($emailAddress === null && $answerText !== '' && $this->answerBelongsToEmailField($questionType, (string)$question->getText(), $question->getExtraSettings())) {
 				$emailAddress = $answerText;
 			}
 
@@ -84,12 +84,50 @@ class ConfirmationEmailListener implements IEventListener {
 	/**
 	 * @param array<string, mixed> $extraSettings
 	 */
-	private function answerBelongsToEmailField(string $questionType, array $extraSettings): bool {
+	private function answerBelongsToEmailField(string $questionType, string $questionTitle, array $extraSettings): bool {
 		if ($questionType === 'email') {
 			return true;
 		}
 
-		return $questionType === Constants::ANSWER_TYPE_SHORT
-			&& (($extraSettings['validationType'] ?? null) === 'email');
+		// Accept short answers with explicit validation set to email
+		if ($questionType === Constants::ANSWER_TYPE_SHORT && (($extraSettings['validationType'] ?? null) === 'email')) {
+			return true;
+		}
+
+		// Accept short answers whose title clearly indicates an email address field
+		if ($questionType === Constants::ANSWER_TYPE_SHORT && $this->titleIndicatesEmail($questionTitle)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private function titleIndicatesEmail(string $title): bool {
+		$normalized = mb_strtolower($title);
+		// Normalize by removing common separators to make matching more robust
+		$collapsed = str_replace(["\t", "\n", "\r", " ", "-", "_", ":", ";", ","], '', $normalized);
+
+		$needles = [
+			'email',           // email, eMail, EMAIL
+			'emailaddress',    // email address
+			'emailadresse',    // German
+			'emailadresa',     // variants
+			'emaill地址',      // fallback: unlikely, illustrative
+			'e-mail',          // original (will match via collapse too)
+			'emel',            // common misspelling
+			'correoElectronico', // Spanish (after collapse: correoelectronico)
+			'correoelectronico',
+			'adresseemail',    // French
+			'emailid',         // sometimes used
+		];
+
+		foreach ($needles as $needle) {
+			$n = str_replace(["\t", "\n", "\r", " ", "-", "_", ":", ";", ","], '', mb_strtolower($needle));
+			if ($n !== '' && str_contains($collapsed, $n)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

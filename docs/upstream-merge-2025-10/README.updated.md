@@ -15,11 +15,14 @@ This folder documents our merge of the latest upstream `nextcloud/forms` into th
 
 ## Using Email Confirmation
 
-Email confirmations are sent automatically if a submission includes an email address field:
+Email confirmations are sent automatically if a submission includes an email address field. A field is treated as an email address when either of the following is true:
 
-- Add an “Email address” question (frontend type `email`).
-- Or add a “Short answer” question and set validation type to `email`.
-- On submission, the first non-empty answer found for such a question is used as the recipient.
+- The question is the upstream `email` type (frontend), or
+- The question is a `short answer` and its title clearly indicates an email address (e.g. contains “email”, “e‑mail”, “email address”, localized variants like “E‑Mail Adresse”, “correo electrónico”, “adresse e‑mail”).
+
+Behavior:
+- The first non-empty matching answer becomes the recipient.
+- The recipient is validated via Nextcloud mailer before sending; invalid addresses are skipped.
 - Email content uses Nextcloud’s email template and includes a brief summary of textual answers.
 
 ## Important Files
@@ -45,4 +48,3 @@ Email confirmations are sent automatically if a submission includes an email add
 - We removed previously added backend constants and form flags (`ANSWER_TYPE_EMAIL`, extra form email flags) to avoid schema and API drift from upstream.
 - No database migrations were added.
 - Upstream versioning is retained (no local version bump in `appinfo/info.xml` or `package.json`).
-

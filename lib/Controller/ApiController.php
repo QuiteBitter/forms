@@ -477,6 +477,13 @@ class ApiController extends OCSController {
 				'text' => $text,
 			]);
 
+			// Map frontend-only 'email' type to backend 'short' + fixed validation
+			$mapEmailToShort = false;
+			if ($type === 'email') {
+				$type = Constants::ANSWER_TYPE_SHORT;
+				$mapEmailToShort = true;
+			}
+
 			if (array_search($type, Constants::ANSWER_TYPES) === false) {
 				$this->logger->debug('Invalid type');
 				throw new OCSBadRequestException('Invalid type');
@@ -506,7 +513,7 @@ class ApiController extends OCSController {
 			$question->setDescription('');
 			$question->setIsRequired(false);
 			$extraSettings = [];
-			if ($type === Constants::ANSWER_TYPE_EMAIL) {
+			if ($mapEmailToShort === true) {
 				$extraSettings['validationType'] = 'email';
 			}
 			$question->setExtraSettings($extraSettings);

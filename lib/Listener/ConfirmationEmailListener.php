@@ -65,7 +65,7 @@ class ConfirmationEmailListener implements IEventListener {
 
 			if (
 				$answerText !== ''
-				&& in_array($questionType, [Constants::ANSWER_TYPE_SHORT, Constants::ANSWER_TYPE_EMAIL, Constants::ANSWER_TYPE_LONG], true)
+				&& in_array($questionType, [Constants::ANSWER_TYPE_SHORT, Constants::ANSWER_TYPE_LONG, 'email'], true)
 			) {
 				$answerSummaries[] = [
 					'question' => $question->getText(),
@@ -85,7 +85,7 @@ class ConfirmationEmailListener implements IEventListener {
 	 * @param array<string, mixed> $extraSettings
 	 */
 	private function answerBelongsToEmailField(string $questionType, array $extraSettings): bool {
-		if ($questionType === Constants::ANSWER_TYPE_EMAIL) {
+		if ($questionType === 'email') {
 			return true;
 		}
 

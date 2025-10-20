@@ -112,11 +112,8 @@ class ConfirmationEmailListener implements IEventListener {
 			'emailaddress',    // email address
 			'emailadresse',    // German
 			'emailadresa',     // variants
-			'emaill地址',      // fallback: unlikely, illustrative
 			'e-mail',          // original (will match via collapse too)
-			'emel',            // common misspelling
-			'correoElectronico', // Spanish (after collapse: correoelectronico)
-			'correoelectronico',
+			'correoelectronico', // Spanish
 			'adresseemail',    // French
 			'emailid',         // sometimes used
 		];

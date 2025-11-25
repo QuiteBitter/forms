@@ -10,7 +10,7 @@
 			alignment="start"
 			variant="tertiary"
 			wide
-			:disabled="locked"
+			:disabled="locked || !isOwner"
 			@click="openModal">
 			<span class="transfer-button__text">{{
 				t('forms', 'Transfer ownership')
@@ -44,7 +44,9 @@
 					:loading="loading"
 					:options="options"
 					:placeholder="t('forms', 'Search for a user')"
-					@search="asyncSearch">
+					@search="
+						(query) => asyncSearch(query, [SHARE_TYPES.SHARE_TYPE_USER])
+					">
 					<template #no-options>
 						{{ noResultText }}
 					</template>
@@ -114,6 +116,11 @@ export default {
 	props: {
 		form: {
 			type: Object,
+			required: true,
+		},
+
+		isOwner: {
+			type: Boolean,
 			required: true,
 		},
 
